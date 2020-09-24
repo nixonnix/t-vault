@@ -20,15 +20,22 @@ const StyledFile = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  :hover {
-    background: ${BackgroundColor.secretHoverBg};
-  }
+  // :hover {
+  //   background: ${BackgroundColor.secretHoverBg};
+  // }
   span {
     margin-left: 5px;
   }
 `;
-const FileWrap = styled.div`
-  padding-left: 2rem;
+const FileWrap = styled.li`
+  // padding-left: 2rem;
+  margin: 0;
+  outline: 0;
+  padding: 0;
+  list-style: none;
+  :hover {
+    background: ${BackgroundColor.secretHoverBg};
+  }
 `;
 const LabelWrap = styled('div')`
   display: flex;

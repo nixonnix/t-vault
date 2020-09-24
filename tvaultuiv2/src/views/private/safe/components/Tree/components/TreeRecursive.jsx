@@ -90,15 +90,13 @@ const TreeRecursive = ({
           ) : (
             <></>
           )}
-          {responseType === 0 ? (
-            <LoaderSpinner />
+          {responseType === 0 ? <LoaderSpinner /> : null}
+          {item?.children?.length === 0 && responseType !== 0 ? (
+            <CreateSecretButton
+              onClick={(e) => setCreateSecretBox(e, item.value)}
+            />
           ) : (
-            item?.children?.length === 0 &&
-            responseType !== 0 && (
-              <CreateSecretButton
-                onClick={(e) => setCreateSecretBox(e, item.value)}
-              />
-            )
+            <></>
           )}
         </Folder>
       );

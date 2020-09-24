@@ -12,11 +12,12 @@ import TreeRecursive from './components/TreeRecursive';
 import SnackbarComponent from '../../../../../components/Snackbar';
 import apiService from '../../apiService';
 
-const StyledTree = styled.div`
+const StyledTree = styled.ul`
   line-height: 1.5;
   margin-top: 1.2rem;
   height: 43.5vh;
   overflow-y: auto;
+  padding: 0;
   & > div {
     padding-left: 0;
   }
@@ -46,12 +47,9 @@ const Tree = (props) => {
   };
 
   const getChildrenData = (id) => {
-    const tempFolders = [...secretsFolder] || [];
-    // const idClone = id.split('/');
-    // idClone.splice(idClone.length - 1, 1);
-    // const parentId = idClone.join('/');
     setResponseType(0);
     if (id) {
+      const tempFolders = [...secretsFolder] || [];
       apiService
         .getSecret(id)
         .then((res) => {
@@ -178,7 +176,7 @@ const Tree = (props) => {
   };
   return (
     <ComponentError>
-      <StyledTree>
+      <StyledTree role="tree">
         <TreeRecursive
           data={secretsFolder}
           saveSecretsToFolder={saveSecretsToFolder}

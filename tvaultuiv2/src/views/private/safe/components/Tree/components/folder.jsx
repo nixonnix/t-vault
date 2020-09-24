@@ -22,24 +22,35 @@ import {
 } from '../../../../../../assets/SvgIcons';
 import PopperElement from '../../Popper';
 
-const FolderContainer = styled.div`
-  padding-left: 2rem;
+const FolderContainer = styled.li`
+  // padding-left: 2rem;
+  margin: 0;
+  outline: 0;
+  padding: 0;
+  list-style: none;
+  :hover {
+    // background-image: ${(props) =>
+      props.active ? props.theme.gradients.list : 'none'};
+    // color: #fff;
+  }
+  &:hover {
+    background-image: ${(props) => props.theme.gradients.list || 'none'};
+  }
 `;
 
 const StyledFolder = styled.div`
   background: ${BackgroundColor.listBg};
   outline: none;
-  :hover {
-    background-image: ${(props) =>
-      props.active ? props.theme.gradients.list : 'none'};
-    color: #fff;
-  }
+  padding-left: 2rem;
+
   .folder--label {
     outline: none;
+    padding-left: 2rem;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: ${(props) => props.padding || '0'};
+    // padding: ${(props) => props.padding || '0'};
 
     span {
       margin-left: 0.5rem;
@@ -51,12 +62,13 @@ const StyledFolder = styled.div`
 //   100% { transform:translateY(0); }
 // `;
 
-const Collapsible = styled.div`
+const Collapsible = styled.ul`
   /* set the height depending on isOpen prop */
   height: ${(p) => (p.isOpen ? 'auto' : '0')};
   animation: accordian 0.4s 0s;
   /* hide the excess content */
   overflow: hidden;
+  padding: 0;
 `;
 const FolderIconWrap = styled('div')`
   margin: 0 1em;
@@ -103,6 +115,12 @@ const PopperItem = styled.div`
     background-image: ${(props) => props.theme.gradients.list || 'none'};
   }
 `;
+const CollapseOuter = styled.div``;
+const CollapseInner = styled.div`
+  & li:hover {
+    background-image: ${(props) => props.theme.gradients.list || 'none'};
+  }
+`;
 const Folder = (props) => {
   const {
     folderInfo,
@@ -118,7 +136,9 @@ const Folder = (props) => {
   const handleToggle = (e) => {
     e.preventDefault();
     setIsOpen(!isOpen);
-    if (!isOpen) getChildNodes(id);
+    if (!isOpen) {
+      getChildNodes(id);
+    }
   };
 
   const handlePopperClick = (e, type) => {
@@ -137,12 +157,16 @@ const Folder = (props) => {
   ];
   return (
     <ComponentError>
-      <FolderContainer>
+      <FolderContainer
+        active={activeSecrets.includes(labelValue)}
+        onMouseEnter={() => handleActiveSecrets(labelValue)}
+        onMouseLeave={() => setActiveSecrets([])}
+      >
         <StyledFolder
           padding="1.2rem 0"
-          onMouseEnter={() => handleActiveSecrets(labelValue)}
-          onMouseLeave={() => setActiveSecrets([])}
-          active={activeSecrets.includes(labelValue)}
+          // onMouseEnter={() => handleActiveSecrets(labelValue)}
+          // onMouseLeave={() => setActiveSecrets([])}
+          // active={activeSecrets.includes(labelValue)}
         >
           <div role="button" className="folder--label" tabIndex={0}>
             <LabelWrap onClick={(e) => handleToggle(e)}>
@@ -202,7 +226,11 @@ const Folder = (props) => {
             </FolderIconWrap>
           </div>
         </StyledFolder>
-        <Collapsible isOpen={isOpen}>{children}</Collapsible>
+        <Collapsible isOpen={isOpen}>
+          <CollapseOuter style={{ display: 'flex' }}>
+            <CollapseInner style={{ width: '100%' }}>{children}</CollapseInner>
+          </CollapseOuter>
+        </Collapsible>
       </FolderContainer>
     </ComponentError>
   );
