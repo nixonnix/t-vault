@@ -25,7 +25,7 @@ const StyledTree = styled.ul`
   margin-top: 1.2rem;
   overflow-y: auto;
   padding: 0;
-  & > div {
+  & > li {
     padding-left: 0;
   }
 `;

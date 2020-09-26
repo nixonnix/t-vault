@@ -23,37 +23,29 @@ import {
 import PopperElement from '../../Popper';
 
 const FolderContainer = styled.li`
-  // padding-left: 2rem;
   margin: 0;
   outline: 0;
-  padding: 0;
   list-style: none;
-  :hover {
-    // background-image: ${(props) =>
-      props.active ? props.theme.gradients.list : 'none'};
-    // color: #fff;
-  }
-  &:hover {
-    background-image: ${(props) => props.theme.gradients.list || 'none'};
-  }
 `;
 
 const StyledFolder = styled.div`
-  background: ${BackgroundColor.listBg};
   outline: none;
-  padding-left: 2rem;
-
+  padding: ${(props) => props.padding || '0'};
+  padding-left: ${(props) => props.paddingLeft}rem;
+  background: ${BackgroundColor.listBg};
+  :hover {
+    background-image: ${(props) =>
+      props.active ? props.theme.gradients.list : 'none'};
+    color: #fff;
+  }
   .folder--label {
     outline: none;
-    padding-left: 2rem;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-    // padding: ${(props) => props.padding || '0'};
-
+    padding-left: ${(props) => props.labelpadding - 2}rem;
     span {
-      margin-left: 0.5rem;
+      margin-left: 0.3rem;
     }
   }
 `;
@@ -88,7 +80,6 @@ const FolderIconWrap = styled('div')`
 const LabelWrap = styled.div`
   display: flex;
   align-items: center;
-  padding-left: 2rem;
   width: 100%;
 `;
 
@@ -116,11 +107,7 @@ const PopperItem = styled.div`
   }
 `;
 const CollapseOuter = styled.div``;
-const CollapseInner = styled.div`
-  & li:hover {
-    background-image: ${(props) => props.theme.gradients.list || 'none'};
-  }
-`;
+const CollapseInner = styled.div``;
 const Folder = (props) => {
   const {
     folderInfo,
@@ -148,15 +135,16 @@ const Folder = (props) => {
     setIsOpen(e);
   };
 
-  const handleActiveSecrets = (folder) => {
+  const handleActiveSecrets = (e, folder) => {
+    e.preventDefault();
     const activeSecretsArr = [];
     activeSecretsArr.push(folder);
     setActiveSecrets([...activeSecretsArr]);
   };
+
   const labelValue = folderInfo?.value?.split('/')[
     folderInfo.value.split('/').length - 1
   ];
-
   // delete folder
   const deleteNode = (treeItem) => {
     onDeleteTreeItem(treeItem);
@@ -164,19 +152,25 @@ const Folder = (props) => {
   // const editNode = (treeItem) => {
   //   editTreeItem(treeItem);
   // };
-
+  const paddingLeft = (folderInfo?.value?.split('/').length / 3) * 3;
   return (
     <ComponentError>
       <FolderContainer
-        active={activeSecrets.includes(labelValue)}
-        onMouseEnter={() => handleActiveSecrets(labelValue)}
-        onMouseLeave={() => setActiveSecrets([])}
+      // onMouseEnter={(e) => handleActiveSecrets(e, labelValue)}
+      // onMouseLeave={() => setActiveSecrets([])}
+      // active={activeSecrets.includes(labelValue)}
+      // paddingLeft={paddingLeft}
       >
         <StyledFolder
+          onMouseEnter={(e) => handleActiveSecrets(e, labelValue)}
+          onMouseLeave={() => setActiveSecrets([])}
+          active={activeSecrets.includes(labelValue)}
           padding="1.2rem 0"
-          // onMouseEnter={() => handleActiveSecrets(labelValue)}
-          // onMouseLeave={() => setActiveSecrets([])}
-          // active={activeSecrets.includes(labelValue)}
+          paddingLeft={paddingLeft}
+          labelpadding={
+            folderInfo?.value?.split('/').length > 3 ? paddingLeft : ''
+          }
+          // paddingLeft={folderInfo?.value?.split('/').length > 3 ? 0 : '2rem'}
         >
           <div role="button" className="folder--label" tabIndex={0}>
             <LabelWrap onClick={(e) => handleToggle(e)}>

@@ -14,29 +14,24 @@ import {
 } from '../../../../../../styles/GlobalStyles';
 import PopperElement from '../../Popper';
 
-const StyledFile = styled.div`
-  background: ${BackgroundColor.secretBg};
-  padding: 1.2rem 0 1.2rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  // :hover {
-  //   background: ${BackgroundColor.secretHoverBg};
-  // }
-  span {
-    margin-left: 5px;
-  }
-`;
 const FileWrap = styled.li`
-  // padding-left: 2rem;
   margin: 0;
   outline: 0;
-  padding: 0;
+  padding-left: ${(props) => props.paddingLeft}rem;
   list-style: none;
+  background: ${BackgroundColor.secretBg};
   :hover {
     background: ${BackgroundColor.secretHoverBg};
   }
 `;
+const StyledFile = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 0 1.2rem 0;
+  padding-left: ${(props) => props.labelPadding - 2}rem;
+  justify-content: space-between;
+`;
+
 const LabelWrap = styled('div')`
   display: flex;
   align-items: center;
@@ -112,11 +107,11 @@ const File = (props) => {
       setSecretprefilledData(JSON.parse(secret));
     }
   };
-
+  const paddingLeft = ((id?.split('/').length + 1) / 3) * 3;
   return (
     <ComponentError>
-      <FileWrap>
-        <StyledFile>
+      <FileWrap paddingLeft={paddingLeft}>
+        <StyledFile labelPadding={paddingLeft}>
           <LabelWrap>
             <IconWrap>
               <IconLock />
