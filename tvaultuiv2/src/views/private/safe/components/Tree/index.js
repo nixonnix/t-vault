@@ -4,18 +4,25 @@
 /* eslint-disable array-callback-return */
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import PropTypes from 'prop-types';
 
-import { findElementAndUpdate } from '../../../../../services/helper-function';
+import {
+  findElementAndUpdate,
+  findElementAndDelete,
+  findElementAndReturnSecrets,
+} from '../../../../../services/helper-function';
 import ComponentError from '../../../../../errorBoundaries/ComponentError/component-error';
 import TreeRecursive from './components/TreeRecursive';
 import SnackbarComponent from '../../../../../components/Snackbar';
+import ButtonComponent from '../../../../../components/FormFields/ActionButton';
+import ConfirmationModal from '../../../../../components/ConfirmationModal';
+import mediaBreakpoints from '../../../../../breakpoints';
 import apiService from '../../apiService';
 
 const StyledTree = styled.ul`
   line-height: 1.5;
   margin-top: 1.2rem;
-  height: 43.5vh;
   overflow-y: auto;
   padding: 0;
   & > div {
@@ -28,22 +35,24 @@ const Tree = (props) => {
   const [isAddInput, setIsAddInput] = useState(false);
   const [inputType, setInputType] = useState({});
   const [responseType, setResponseType] = useState(null);
-  const [toastMessage, setToastMessage] = useState('');
-
+  const [secretprefilledData, setSecretprefilledData] = useState({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [status, setStatus] = useState({});
+  const isMobileScreen = useMediaQuery(mediaBreakpoints.small);
+  const [deletePath, setDeleteItem] = useState({});
   // set inital tree data structure
   const setTreeData = (treeData) => {
     setSecretsFolder(treeData);
   };
-
   useEffect(() => {
     setTreeData(data);
   }, [data]);
-
   const onToastClose = (reason) => {
     if (reason === 'clickaway') {
       return;
     }
     setResponseType(null);
+    setStatus({});
   };
 
   const getChildrenData = (id) => {
@@ -65,11 +74,17 @@ const Tree = (props) => {
           setResponseType(-1);
           if (!error.toString().toLowerCase().includes('network')) {
             if (error.response) {
-              setToastMessage(error.response?.data.errors[0]);
+              setStatus({
+                status: 'failed',
+                message: error.response?.data.errors[0],
+              });
               return;
             }
           }
-          setToastMessage('Network Error');
+          setStatus({
+            status: 'failed',
+            message: 'Network Error',
+          });
         });
     }
   };
@@ -81,40 +96,54 @@ const Tree = (props) => {
    */
   const saveSecretsToFolder = (obj, node) => {
     const tempFolders = [...secretsFolder] || [];
+    const currentSecrets = findElementAndReturnSecrets(tempFolders, node);
     const folderObj = {};
     folderObj.id = `${obj.parentId}`;
     folderObj.parentId = obj.parentId;
-    folderObj.value = JSON.stringify({
-      data: { [obj.key]: obj.value },
-    });
     folderObj.type = obj.type || 'secret';
-
     folderObj.children = [];
+    folderObj.value =
+      currentSecrets &&
+      JSON.stringify({
+        data: { ...currentSecrets.data, [obj.key]: obj.value },
+      });
+
     apiService
-      .addSecret(folderObj.id, {
+      .modifySecret(folderObj.id, {
         path: folderObj.id,
-        data: { [obj.key]: obj.value },
+        data: { ...currentSecrets?.data, [obj.key]: obj.value },
       })
       // eslint-disable-next-line no-unused-vars
       .then((res) => {
         setResponseType(1);
-        const updatedArray = findElementAndUpdate(tempFolders, node, folderObj);
-        setSecretsFolder([...updatedArray]);
-        setToastMessage(res.data.messages[0]);
+        getChildrenData(node);
+        setStatus({
+          status: 'success',
+          message: res.data.messages[0],
+        });
       })
       .catch((error) => {
         setResponseType(-1);
         if (!error.toString().toLowerCase().includes('network')) {
           if (error.response) {
-            setToastMessage(error.response?.data.errors[0]);
+            setStatus({
+              status: 'failed',
+              message: error.response?.data.errors[0],
+            });
             return;
           }
         }
         if (error.toString().toLowerCase().includes('422')) {
-          setToastMessage('Secret already exists');
+          setStatus({
+            status: 'failed',
+            message: 'Secret already exists!',
+          });
           return;
         }
-        setToastMessage('Network Error');
+        setStatus({
+          status: 'failed',
+          message: 'Network Error',
+        });
       });
     setIsAddInput(false);
   };
@@ -139,21 +168,33 @@ const Tree = (props) => {
           folderObj
         );
         setSecretsFolder([...updatedArray]);
-        setToastMessage(res.data.messages[0]);
+        setStatus({
+          status: 'success',
+          message: res.data.messages[0],
+        });
       })
       .catch((error) => {
         setResponseType(-1);
         if (!error.toString().toLowerCase().includes('network')) {
           if (error.response) {
-            setToastMessage(error.response?.data.errors[0]);
+            setStatus({
+              status: 'success',
+              message: error.response?.data.errors[0],
+            });
             return;
           }
         }
         if (error.toString().toLowerCase().includes('422')) {
-          setToastMessage('folder already exists');
+          setStatus({
+            status: 'failed',
+            message: 'Folder already exists!',
+          });
           return;
         }
-        setToastMessage('Network Error');
+        setStatus({
+          status: 'failed',
+          message: 'Network Error',
+        });
       });
     setIsAddInput(false);
   };
@@ -174,11 +215,70 @@ const Tree = (props) => {
   const handleCancelClick = (val) => {
     setIsAddInput(val);
   };
+
+  const handleDeleteModalClose = () => {
+    setDeleteModalOpen(false);
+  };
+
+  // delete item in the tree
+  const deleteTreeItem = (node) => {
+    setResponseType(0);
+    setDeleteModalOpen(false);
+    if (node.type.toLowerCase() === 'secret') {
+      const tempFolders = [...secretsFolder] || [];
+      const updatedObject = findElementAndDelete(
+        tempFolders,
+        node.parentId,
+        node.key
+      );
+      const payload = { path: node.parentId, data: updatedObject.data };
+      apiService
+        .modifySecret(node.parentId, payload)
+        .then((res) => {
+          setResponseType(1);
+          getChildrenData(node.parentId);
+          setStatus({
+            status: 'success',
+            message: 'Secret deleted Successfully',
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          setResponseType(-1);
+          setStatus({ status: 'failed', message: 'Secret deletion failed!' });
+        });
+      return;
+    }
+    apiService
+      .deleteFolder(node.id)
+      .then((res) => {
+        setResponseType(1);
+        getChildrenData(node.parentId);
+        setStatus({
+          status: 'success',
+          message: res.data.messages[0].toLowerCase().includes('sdb deleted')
+            ? 'Folder Deleted Successfully'
+            : res.data.messages[0],
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        setResponseType(-1);
+        setStatus({ status: 'failed', message: 'Folder deletion failed!' });
+      });
+  };
+
+  // delete tree item handler
+  const onDeleteTreeItem = (node) => {
+    setDeleteModalOpen(true);
+    setDeleteItem(node);
+  };
+
   return (
     <ComponentError>
       <StyledTree role="tree">
         <TreeRecursive
-          data={secretsFolder}
+          data={(secretsFolder?.length && secretsFolder[0].children) || []}
           saveSecretsToFolder={saveSecretsToFolder}
           setCreateSecretBox={setCreateSecretBox}
           handleCancelClick={handleCancelClick}
@@ -190,26 +290,51 @@ const Tree = (props) => {
           responseType={responseType}
           setResponseType={setResponseType}
           getChildrenData={getChildrenData}
+          onDeleteTreeItem={onDeleteTreeItem}
+          secretprefilledData={secretprefilledData}
+          setSecretprefilledData={setSecretprefilledData}
         />
-        {responseType === -1 && !isAddInput ? (
+        {(responseType === -1 || status.status === 'failed') && !isAddInput ? (
           <SnackbarComponent
             open
             onClose={() => onToastClose()}
             severity="error"
             icon="error"
-            message={toastMessage || 'Something went wrong!'}
+            message={status.message || 'Something went wrong!'}
           />
         ) : (
-          responseType === 1 &&
+          (responseType === 1 || status.status === 'success') &&
           !isAddInput && (
             <SnackbarComponent
               open
               onClose={() => onToastClose()}
               severity="success"
-              message={toastMessage || 'Folder/Secret added successfully'}
+              message={status.message || 'Folder/Secret added successfully'}
             />
           )
         )}
+        <ConfirmationModal
+          open={deleteModalOpen}
+          title={`Are you sure you want to delete this secret? `}
+          cancelButton={
+            // eslint-disable-next-line react/jsx-wrap-multilines
+            <ButtonComponent
+              label="Cancel"
+              color="primary"
+              onClick={() => handleDeleteModalClose()}
+              width={isMobileScreen ? '100%' : '38%'}
+            />
+          }
+          confirmButton={
+            // eslint-disable-next-line react/jsx-wrap-multilines
+            <ButtonComponent
+              label="Confirm"
+              color="secondary"
+              onClick={() => deleteTreeItem(deletePath)}
+              width={isMobileScreen ? '100%' : '38%'}
+            />
+          }
+        />
       </StyledTree>
     </ComponentError>
   );

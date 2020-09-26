@@ -84,20 +84,35 @@ const PopperItem = styled.div`
 `;
 
 const File = (props) => {
-  const { setInputType, setIsAddInput, secret } = props;
+  const {
+    parentId,
+    secret,
+    id,
+    onDeleteTreeItem,
+    setSecretprefilledData,
+    type,
+    setIsAddInput,
+    setInputType,
+  } = props;
   const [viewSecretValue, setViewSecretValue] = useState(false);
 
-  // handle popper click
-  const handlePopperClick = (e, type) => {
-    setInputType(type);
-    setIsAddInput(e);
-  };
   const toggleSecretValue = (val) => {
     setViewSecretValue(val);
   };
 
-  const secretData = secret && JSON.parse(secret);
-  const { data } = secretData;
+  // delete folder
+  const deleteNode = (treeItem) => {
+    onDeleteTreeItem(treeItem);
+  };
+
+  const editNode = () => {
+    setIsAddInput(true);
+    setInputType('secret');
+    if (secret) {
+      setSecretprefilledData(JSON.parse(secret));
+    }
+  };
+
   return (
     <ComponentError>
       <FileWrap>
@@ -106,10 +121,10 @@ const File = (props) => {
             <IconWrap>
               <IconLock />
             </IconWrap>
-            <TitleThree>{data && Object.keys(data)[0]}</TitleThree>
+            <TitleThree>{secret && Object.keys(secret)[0]}</TitleThree>
           </LabelWrap>
           <SecretWrap type="password" viewSecret={viewSecretValue}>
-            {data && Object.values(data)[0]}
+            {secret && Object.values(secret)[0]}
           </SecretWrap>
           <FolderIconWrap>
             <PopperElement
@@ -126,11 +141,22 @@ const File = (props) => {
                 <img alt="refersh-ic" src={IconRefreshCC} />
                 <span>{viewSecretValue ? 'Hide secret' : 'View Secret'}</span>
               </PopperItem>
-              <PopperItem>
+              <PopperItem onClick={() => editNode()}>
                 <IconEdit />
                 <span>Edit</span>
               </PopperItem>
-              <PopperItem onClick={() => handlePopperClick(true, 'folder')}>
+              <PopperItem
+                onClick={
+                  () =>
+                    deleteNode({
+                      id,
+                      type,
+                      key: Object.keys(secret)[0],
+                      parentId,
+                    })
+                  // eslint-disable-next-line react/jsx-curly-newline
+                }
+              >
                 <IconDeleteActive />
                 <span>Delete</span>
               </PopperItem>
@@ -142,13 +168,23 @@ const File = (props) => {
   );
 };
 File.propTypes = {
-  setInputType: PropTypes.func,
+  secret: PropTypes.objectOf(PropTypes.object),
+  id: PropTypes.string,
+  onDeleteTreeItem: PropTypes.func,
+  parentId: PropTypes.string,
+  type: PropTypes.string,
   setIsAddInput: PropTypes.func,
-  secret: PropTypes.string,
+  setInputType: PropTypes.func,
+  setSecretprefilledData: PropTypes.func,
 };
 File.defaultProps = {
-  setInputType: () => {},
+  onDeleteTreeItem: () => {},
   setIsAddInput: () => {},
-  secret: '',
+  setSecretprefilledData: () => {},
+  secret: {},
+  id: '',
+  parentId: '',
+  type: '',
+  setInputType: 'secret',
 };
 export default File;

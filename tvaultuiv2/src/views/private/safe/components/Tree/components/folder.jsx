@@ -16,7 +16,7 @@ import {
 } from '../../../../../../styles/GlobalStyles';
 import {
   IconDeleteActive,
-  IconEdit,
+  // IconEdit,
   IconAddFolder,
   IconAddSecret,
 } from '../../../../../../assets/SvgIcons';
@@ -129,6 +129,8 @@ const Folder = (props) => {
     setIsAddInput,
     getChildNodes,
     id,
+    onDeleteTreeItem,
+    setCurrentNode,
   } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [activeSecrets, setActiveSecrets] = useState([]);
@@ -136,9 +138,8 @@ const Folder = (props) => {
   const handleToggle = (e) => {
     e.preventDefault();
     setIsOpen(!isOpen);
-    if (!isOpen) {
-      getChildNodes(id);
-    }
+    setCurrentNode(id);
+    if (!isOpen) getChildNodes(id);
   };
 
   const handlePopperClick = (e, type) => {
@@ -155,6 +156,15 @@ const Folder = (props) => {
   const labelValue = folderInfo?.value?.split('/')[
     folderInfo.value.split('/').length - 1
   ];
+
+  // delete folder
+  const deleteNode = (treeItem) => {
+    onDeleteTreeItem(treeItem);
+  };
+  // const editNode = (treeItem) => {
+  //   editTreeItem(treeItem);
+  // };
+
   return (
     <ComponentError>
       <FolderContainer
@@ -214,11 +224,19 @@ const Folder = (props) => {
                   <IconAddSecret />
                   <span>Create Secret</span>
                 </PopperItem>
-                <PopperItem>
+                {/* <PopperItem onClick={() => editNode(folderInfo.id)}>
                   <IconEdit />
                   <span>Edit</span>
-                </PopperItem>
-                <PopperItem>
+                </PopperItem> */}
+                <PopperItem
+                  onClick={() =>
+                    deleteNode({
+                      id: folderInfo.id,
+                      type: folderInfo.type,
+                      parentId: folderInfo.parentId,
+                    })
+                  }
+                >
                   <IconDeleteActive />
                   <span> Delete</span>
                 </PopperItem>
@@ -243,7 +261,9 @@ Folder.propTypes = {
   setInputType: PropTypes.func,
   setIsAddInput: PropTypes.func,
   getChildNodes: PropTypes.func,
+  setCurrentNode: PropTypes.func,
   id: PropTypes.string,
+  onDeleteTreeItem: PropTypes.func,
 };
 Folder.defaultProps = {
   folderInfo: {},
@@ -251,6 +271,8 @@ Folder.defaultProps = {
   setInputType: () => {},
   setIsAddInput: () => {},
   getChildNodes: () => {},
+  onDeleteTreeItem: () => {},
+  setCurrentNode: () => {},
   id: '',
 };
 

@@ -23,11 +23,13 @@ import NoSecretsIcon from '../../../../../assets/no-data-secrets.svg';
 import NamedButton from '../../../../../components/NamedButton';
 import NoData from '../../../../../components/NoData';
 import mediaBreakpoints from '../../../../../breakpoints';
-import AddFolder from '../AddFolder';
+// import AddFolder from '../AddFolder';
 import Tree from '../Tree';
 import Permissions from '../Permissions';
 import apiService from '../../apiService';
-// import SnackbarComponent from '../../../../../components/Snackbar';
+import disableAddFolder from '../../../../../assets/addfolder_inactive.svg';
+import AddFolderModal from '../AddFolderModal';
+import SnackbarComponent from '../../../../../components/Snackbar';
 // styled components goes here
 
 const EmptySecretBox = styled('div')`
@@ -45,9 +47,11 @@ const customBtnStyles = css`
 `;
 
 const TabPanelWrap = styled.div`
-  height: 54.75vh;
   position: relative;
-  margin-top: 1.3rem;
+  height: 100%;
+  margin: 0;
+  padding-top: 1.3rem;
+  overflow: auto;
   ${mediaBreakpoints.small} {
     height: 77vh;
   }
@@ -60,6 +64,10 @@ const CountSpan = styled.span`
   margin-top: 1.5rem;
   color: #5e627c;
   font-size: 1.3rem;
+`;
+
+const TabContentsWrap = styled('div')`
+  height: calc(100% - 4.8rem);
 `;
 
 const TabPanel = (props) => {
@@ -98,11 +106,15 @@ const useStyles = makeStyles(() => ({
   root: {
     flexGrow: 1,
     padding: '0 2.1rem',
+    height: 'calc( 100% - 19.1rem )',
+    display: 'flex',
+    flexDirection: 'column',
   },
   appBar: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    height: '4.8rem',
   },
   tab: {
     minWidth: '9.5rem',
@@ -116,7 +128,7 @@ export default function SelectionTabs(props) {
   const [enabledAddFolder, setEnableAddFolder] = useState(false);
   const [secretsFolder, setSecretsFolder] = useState([]);
   const [responseType, setResponseType] = useState(null);
-  const [toastMessage, setToastMessage] = useState('');
+  const [status, setStatus] = useState({});
 
   // resolution handlers
   const isMobileScreen = useMediaQuery(mediaBreakpoints.small);
@@ -129,12 +141,12 @@ export default function SelectionTabs(props) {
     setEnableAddFolder(true);
   };
   // toast close handling
-  // const onToastClose = (reason) => {
-  //   if (reason === 'clickaway') {
-  //     return;
-  //   }
-  //   setResponseType(null);
-  // };
+  const onToastClose = (reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setStatus({});
+  };
 
   const addSecretsFolderList = (secretFolder) => {
     const tempFolders = [...secretsFolder] || [];
@@ -144,12 +156,12 @@ export default function SelectionTabs(props) {
     folderObj.value = secretFolder.value;
     folderObj.type = secretFolder.type || 'folder';
     folderObj.children = [];
-    tempFolders.push(folderObj);
     setResponseType(0);
     apiService
       .addFolder(folderObj.id)
       .then((res) => {
-        setToastMessage(res.data.messages[0]);
+        setStatus({ status: 'success', message: res.data.messages[0] });
+        tempFolders[0].children.push(folderObj);
         setSecretsFolder([...tempFolders]);
         setResponseType(1);
       })
@@ -157,21 +169,29 @@ export default function SelectionTabs(props) {
         setResponseType(-1);
         if (!error.toString().toLowerCase().includes('network')) {
           if (error.response) {
-            setToastMessage(error.response?.data.errors[0]);
+            setStatus({
+              status: 'failed',
+              message: error.response?.data.errors[0],
+            });
             return;
           }
         }
         if (error.toString().toLowerCase().includes('422')) {
-          setToastMessage('folder already exists');
+          setStatus({
+            status: 'failed',
+            message: 'Folder already exists',
+          });
           return;
         }
-        setToastMessage('Network Error');
+        setStatus({
+          status: 'failed',
+          message: 'Network Error!',
+        });
       });
     setEnableAddFolder(false);
   };
 
   useEffect(() => {
-    setResponseType(0);
     if (safeDetail?.path) {
       setResponseType(0);
       if (!safeDetail.manage) {
@@ -181,7 +201,7 @@ export default function SelectionTabs(props) {
         .getSecret(safeDetail.path)
         .then((res) => {
           setResponseType(null);
-          setSecretsFolder(res.data.children);
+          setSecretsFolder([res.data]);
         })
         .catch((error) => {
           setResponseType(-1);
@@ -190,11 +210,17 @@ export default function SelectionTabs(props) {
           }
           if (!error.toString().toLowerCase().includes('network')) {
             if (error.response) {
-              setToastMessage(error.response.data.errors[0]);
+              setStatus({
+                status: 'failed',
+                message: error.response.data.errors[0],
+              });
               return;
             }
           }
-          setToastMessage('Network Error');
+          setStatus({
+            status: 'failed',
+            message: 'Network Error',
+          });
         });
     }
   }, [safeDetail]);
@@ -218,77 +244,99 @@ export default function SelectionTabs(props) {
               label="Add Folder"
               onClick={addSecretsFolder}
               customStyle={customBtnStyles}
-              iconSrc={addFolderPlus}
-              disable={safeDetail?.access?.toLowerCase() === 'read'}
+              iconSrc={
+                safeDetail?.access?.toLowerCase() === 'read' ||
+                Object.keys(safeDetail).length === 0
+                  ? disableAddFolder
+                  : addFolderPlus
+              }
+              disable={
+                safeDetail?.access?.toLowerCase() === 'read' ||
+                Object.keys(safeDetail).length === 0
+              }
             />
           )}
         </AppBar>
-        <TabPanel value={value} index={0}>
-          {
-            <CountSpan color="#5e627c">
-              {`${secretsFolder && secretsFolder.length} Secrets`}
-            </CountSpan>
-          }
-          {enabledAddFolder ? (
-            <AddFolder
-              childrens={secretsFolder}
-              handleSaveClick={addSecretsFolderList}
-              parentId={safeDetail.path}
-              handleCancelClick={() => setEnableAddFolder(false)}
-            />
-          ) : (
-            <></>
-          )}
-
-          {responseType === -1 && !enabledAddFolder && !secretsFolder && (
-            <EmptySecretBox>
-              {' '}
-              <Error description="Error while fetching safes folders" />
-            </EmptySecretBox>
-          )}
-          {!secretsFolder?.length && responseType === 0 ? (
-            <Loader width="100%" height="70%" />
-          ) : secretsFolder && secretsFolder.length ? (
-            <Tree data={secretsFolder} />
-          ) : responseType === 1 &&
-            responseType !== 0 &&
-            responseType !== -1 &&
-            secretsFolder?.length === 0 &&
-            !enabledAddFolder ? (
-            <EmptySecretBox>
-              <NoData
-                imageSrc={NoSecretsIcon}
-                description="add a <strong>Folder</strong> and then you will be able to add <strong>secrets</strong> to view them all here"
-                actionButton={
-                  // eslint-disable-next-line react/jsx-wrap-multilines
-                  <ButtonComponent
-                    label="add"
-                    icon="add"
-                    color="secondary"
-                    disabled={safeDetail?.access?.toLowerCase() === 'read'}
-                    width={isMobileScreen ? '100%' : ''}
-                    onClick={() => setEnableAddFolder(true)}
-                  />
-                }
-                bgIconStyle={bgIconStyle}
-                width={isMobileScreen ? '100%' : '30%'}
+        <TabContentsWrap>
+          <TabPanel value={value} index={0}>
+            {
+              <CountSpan color="#5e627c">
+                {`${secretsFolder && secretsFolder.length} Secrets`}
+              </CountSpan>
+            }
+            {enabledAddFolder ? (
+              <AddFolderModal
+                openModal={enabledAddFolder}
+                setOpenModal={setEnableAddFolder}
+                childrens={secretsFolder}
+                handleSaveClick={addSecretsFolderList}
+                parentId={safeDetail.path}
+                handleCancelClick={() => setEnableAddFolder(false)}
               />
-            </EmptySecretBox>
-          ) : (
-            <></>
-          )}
-        </TabPanel>
-        <TabPanel value={value} index={1}>
-          <Permissions safeDetail={safeDetail} />
-        </TabPanel>
+            ) : (
+              <></>
+            )}
+            {responseType === -1 &&
+              !enabledAddFolder &&
+              !secretsFolder?.length && (
+                <EmptySecretBox>
+                  {' '}
+                  <Error description="Error while fetching safes folders" />
+                </EmptySecretBox>
+              )}
+            {!secretsFolder?.length && responseType === 0 ? (
+              <Loader width="100%" height="70%" />
+            ) : secretsFolder && secretsFolder.length ? (
+              <Tree data={secretsFolder} />
+            ) : responseType === 1 &&
+              responseType !== 0 &&
+              responseType !== -1 &&
+              secretsFolder?.length === 0 &&
+              !enabledAddFolder ? (
+              // eslint-disable-next-line react/jsx-indent
+              <EmptySecretBox>
+                <NoData
+                  imageSrc={NoSecretsIcon}
+                  description="add a <strong>Folder</strong> and then you will be able to add <strong>secrets</strong> to view them all here"
+                  actionButton={
+                    // eslint-disable-next-line react/jsx-wrap-multilines
+                    <ButtonComponent
+                      label="add"
+                      icon="add"
+                      color="secondary"
+                      disabled={safeDetail?.access?.toLowerCase() === 'read'}
+                      width={isMobileScreen ? '100%' : ''}
+                      onClick={() => setEnableAddFolder(true)}
+                    />
+                  }
+                  bgIconStyle={bgIconStyle}
+                  width={isMobileScreen ? '100%' : '30%'}
+                />
+              </EmptySecretBox>
+            ) : (
+              <></>
+            )}
+          </TabPanel>
 
-        {/* <SnackbarComponent
-          open={responseType === -1}
-          onClose={() => onToastClose()}
-          severity="error"
-          icon="error"
-          message={toastMessage || 'Something went wrong!'}
-        /> */}
+          <TabPanel value={value} index={1}>
+            <Permissions safeDetail={safeDetail} />
+          </TabPanel>
+
+          <SnackbarComponent
+            open={status.status === 'failed'}
+            onClose={() => onToastClose()}
+            severity="error"
+            icon="error"
+            message={status.message || 'Something went wrong!'}
+          />
+          <SnackbarComponent
+            open={status.status === 'success'}
+            onClose={() => onToastClose()}
+            severity="success"
+            icon="checked"
+            message={status.message || 'Folder added successfully'}
+          />
+        </TabContentsWrap>
       </div>
     </ComponentError>
   );

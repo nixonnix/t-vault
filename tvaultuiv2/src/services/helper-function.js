@@ -1,3 +1,4 @@
+/* eslint-disable guard-for-in */
 /* eslint-disable array-callback-return */
 /* eslint-disable consistent-return */
 // eslint-disable-next-line import/prefer-default-export
@@ -30,7 +31,7 @@ export function findElementById(arr, id, nestingKey) {
   if (arr.length === 0) return;
   // return element if found else collect all children(or other nestedKey) array and run this function
   return (
-    arr.find((d) => d.value.toLowerCase() === id.toLowerCase()) ||
+    arr.find((d) => d?.value?.toLowerCase() === id?.toLowerCase()) ||
     findElementById(
       arr.flatMap((d) => d[nestingKey] || []),
       id,
@@ -45,21 +46,57 @@ export const findElementAndUpdate = (arr, parentId, item) => {
   const tempArr = [...arr];
   const itemToUpdate = findElementById(tempArr, parentId, 'children');
   if (Array.isArray(item)) {
-    const isItemExist = itemToUpdate.children.filter(
-      (itm) => itm.id === item.id
-    );
     if (!itemToUpdate.children.length) {
       itemToUpdate.children = [...itemToUpdate.children, ...item];
-      return;
+      return tempArr;
     }
-    if (!isItemExist) {
-      itemToUpdate.children = [...itemToUpdate.children, ...item];
-    }
+    itemToUpdate.children = [...item];
   } else {
     itemToUpdate.children = [...itemToUpdate.children, item];
   }
 
   return tempArr;
+};
+
+export const findSecretAndUpdate = (arr, parentId, secrets) => {
+  if (arr.length === 0) return;
+  const tempArr = [...arr];
+  const itemToUpdate = findElementById(tempArr, parentId, 'children');
+  const currentSecretData = itemToUpdate.children.filter(
+    (sec) => sec.type.toLowerCase() === 'secret'
+  )[0];
+  currentSecretData.value = JSON.stringify({ secrets });
+
+  return tempArr;
+};
+
+export const findElementAndDelete = (arr, parent, key) => {
+  const currentParentSecret = findElementById(arr, parent, 'children');
+  const currentSecretData = currentParentSecret.children.filter(
+    (sec) => sec.type.toLowerCase() === 'secret'
+  )[0];
+
+  const obj = JSON.parse(currentSecretData.value);
+  delete obj.data[key];
+  return obj;
+};
+
+export const findElementAndReturnSecrets = (arr, idToFind) => {
+  const currentParentSecret = findElementById(arr, idToFind, 'children');
+  const currentSecretData = currentParentSecret?.children?.filter(
+    (sec) => sec.type.toLowerCase() === 'secret'
+  )[0];
+  const obj = currentSecretData && JSON.parse(currentSecretData.value);
+  return obj;
+};
+
+export const convertObjectToArray = (data) => {
+  const array = [];
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [key, value] of Object.entries(data?.data)) {
+    array.push({ [key]: value });
+  }
+  return array;
 };
 
 export const makeSafesList = (array, type) => {
