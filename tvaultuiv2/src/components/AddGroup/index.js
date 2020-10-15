@@ -149,15 +149,21 @@ const AddGroup = (props) => {
   }, [searchValue, searchLoader, options]);
 
   useEffect(() => {
-    if (
-      !isValidGroupName ||
-      (searchValue?.toLowerCase() === groupname && radioValue === access)
-    ) {
+    if (groupname) {
+      if (
+        (groupname !== searchValue?.toLowerCase() && !isValidGroupName) ||
+        (groupname === searchValue?.toLowerCase() && access === radioValue)
+      ) {
+        setDisabledSave(true);
+      } else {
+        setDisabledSave(false);
+      }
+    } else if (!isValidGroupName) {
       setDisabledSave(true);
     } else {
       setDisabledSave(false);
     }
-  }, [searchValue, radioValue, groupname, access, isValidGroupName]);
+  }, [searchValue, radioValue, access, groupname, isValidGroupName]);
 
   const callSearchApi = useCallback(
     debounce(
@@ -189,10 +195,10 @@ const AddGroup = (props) => {
     []
   );
 
-  const onSearchChange = (text) => {
-    setSearchValue(text);
-    if (text !== '' && text?.length > 2) {
-      callSearchApi(text);
+  const onSearchChange = (e) => {
+    setSearchValue(e.target.value);
+    if (e.target.value !== '' && e.target.value?.length > 2) {
+      callSearchApi(e.target.value);
     }
   };
 
