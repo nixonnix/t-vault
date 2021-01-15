@@ -112,14 +112,15 @@ const User = (props) => {
     setResponse({ status: 'loading' });
     apiService
       .addUserPermission(data)
-      .then((res) => {
+      .then(async (res) => {
         if (res && res.data?.messages) {
           updateToastMessage(1, res.data?.messages[0]);
         }
+        await refresh();
       })
       .catch((err) => {
-        if (err.response?.data?.messages && err.response.data.messages[0]) {
-          updateToastMessage(-1, err.response.data.messages[0]);
+        if (err.response?.data?.errors && err.response.data.errors[0]) {
+          updateToastMessage(-1, err.response.data.errors[0]);
         }
         setResponse({ status: 'success' });
       });
@@ -133,7 +134,6 @@ const User = (props) => {
     };
     await onSaveClicked(value);
     setResponse({ status: 'loading' });
-    await refresh();
     onNewPermissionChange();
   };
 
@@ -153,8 +153,8 @@ const User = (props) => {
         }
       })
       .catch((err) => {
-        if (err.response?.data?.messages && err.response.data.messages[0]) {
-          updateToastMessage(-1, err.response.data.messages[0]);
+        if (err.response?.data?.errors && err.response.data.errors[0]) {
+          updateToastMessage(-1, err.response.data.errors[0]);
         }
         setResponse({ status: 'success' });
       });

@@ -99,6 +99,10 @@ const InputFieldLabelWrapper = styled.div`
   }
 `;
 
+const SearchInputFieldLabelWrapper = styled.div`
+  margin-bottom: 2rem;
+`;
+
 const autoLoaderStyle = css`
   position: absolute;
   top: 3rem;
@@ -288,9 +292,7 @@ const ViewCertificate = (props) => {
       if (notifyUserSelected?.userEmail && searchBy !== 'GroupEmail') {
         if (notifyUserSelected?.userEmail.toLowerCase() !== notifyEmail) {
           setIsValidNotifyEmail(false);
-          setEmailErrorMsg(
-            'Please enter a valid email address or not available!'
-          );
+          setEmailErrorMsg('Please enter a valid user or user not available!');
         } else {
           setIsValidNotifyEmail(true);
         }
@@ -301,9 +303,7 @@ const ViewCertificate = (props) => {
         )
       ) {
         setIsValidNotifyEmail(false);
-        setEmailErrorMsg(
-          'Please enter a valid email address or not available!'
-        );
+        setEmailErrorMsg('Please enter a valid group email or not available!');
       } else {
         setIsValidNotifyEmail(true);
       }
@@ -662,7 +662,7 @@ const ViewCertificate = (props) => {
                 </InputFieldLabelWrapper>
               </>
             )}
-            <InputFieldLabelWrapper>
+            <SearchInputFieldLabelWrapper>
               <InputLabel>Search By:</InputLabel>
               <RadioButtonComponent
                 menu={['User', 'GroupEmail']}
@@ -672,7 +672,7 @@ const ViewCertificate = (props) => {
                 }}
                 value={searchBy}
               />
-            </InputFieldLabelWrapper>
+            </SearchInputFieldLabelWrapper>
             <NotificationEmailsWrap>
               <InputLabel>
                 Add Emails to Notify
@@ -699,7 +699,11 @@ const ViewCertificate = (props) => {
                   onSelected={(e, val) => onNotifyEmailSelected(e, val)}
                   onKeyDown={(e) => onEmailKeyDownClicked(e)}
                   onChange={(e) => onNotifyEmailChange(e)}
-                  placeholder="Search by NTID, Email or Name "
+                  placeholder={
+                    searchBy === 'GroupEmail'
+                      ? 'Search by GroupEmail'
+                      : 'Search by NTID, Email or Name '
+                  }
                   error={
                     notifyEmail?.length > 2 &&
                     (notifyEmailError || !isValidNotifyEmail)
