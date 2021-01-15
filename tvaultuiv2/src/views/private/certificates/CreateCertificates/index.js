@@ -35,7 +35,6 @@ import {
   RequiredText,
 } from '../../../../styles/GlobalStyles';
 import AutoCompleteComponent from '../../../../components/FormFields/AutoComplete';
-import TypeAheadComponent from '../../../../components/TypeAheadComponent';
 
 const { small } = mediaBreakpoints;
 
@@ -77,9 +76,9 @@ const InputFieldLabelWrapper = styled.div`
 const AutoInputFieldLabelWrapper = styled.div`
   position: relative;
   width: 100%;
-  display: flex;
-  .MuiTextField-root {
-    width: 100%;
+  display: flex%;
+  .MuiAutocomplete-root {
+    width: calc(100% - 4rem);
   }
 `;
 const ContainerOwnerWrap = styled.div`
@@ -210,10 +209,6 @@ const autoLoaderStyle = css`
   position: absolute;
   top: 1rem;
   right: 4rem;
-`;
-
-const TypeAheadWrap = styled.div`
-  width: 100%;
 `;
 
 const useStyles = makeStyles((theme) => ({
@@ -931,41 +926,39 @@ const CreateCertificates = (props) => {
                   {notifyEmailStatus.status === 'available' && (
                     <NotificationAutoWrap>
                       <AutoInputFieldLabelWrapper>
-                        <TypeAheadWrap>
-                          <TypeAheadComponent
-                            options={
-                              searchBy === 'GroupEmail'
-                                ? options
-                                : options.map(
-                                    (item) =>
-                                      `${item?.userEmail?.toLowerCase()}, ${getName(
-                                        item?.displayName?.toLowerCase()
-                                      )}, ${item?.userName?.toLowerCase()}`
-                                  )
-                            }
-                            userInput={notifyEmail}
-                            icon="search"
-                            name="notifyUser"
-                            onSelected={(e, val) => onSelected(e, val)}
-                            onKeyDown={(e) => onEmailKeyDownClicked(e)}
-                            onChange={(e) => onNotifyEmailChange(e)}
-                            placeholder="Search by NTID, Email or Name "
-                            error={
-                              notifyEmail?.length > 2 &&
-                              (emailError || !isValidEmail)
-                            }
-                            helperText={
-                              notifyEmail?.length > 2 &&
-                              (emailError || !isValidEmail)
-                                ? emailErrorMsg
-                                : ''
-                            }
-                          />
-                          {autoLoader && (
-                            <LoaderSpinner customStyle={autoLoaderStyle} />
-                          )}
-                        </TypeAheadWrap>
-
+                        <AutoCompleteComponent
+                          options={
+                            searchBy === 'GroupEmail'
+                              ? options
+                              : options.map(
+                                  (item) =>
+                                    `${item?.userEmail?.toLowerCase()}, ${getName(
+                                      item?.displayName?.toLowerCase()
+                                    )}, ${item?.userName?.toLowerCase()}`
+                                )
+                          }
+                          classes={classes}
+                          searchValue={notifyEmail}
+                          icon="search"
+                          name="notifyUser"
+                          onSelected={(e, val) => onSelected(e, val)}
+                          onKeyDown={(e) => onEmailKeyDownClicked(e)}
+                          onChange={(e) => onNotifyEmailChange(e)}
+                          placeholder="Search by NTID, Email or Name "
+                          error={
+                            notifyEmail?.length > 2 &&
+                            (emailError || !isValidEmail)
+                          }
+                          helperText={
+                            notifyEmail?.length > 2 &&
+                            (emailError || !isValidEmail)
+                              ? emailErrorMsg
+                              : ''
+                          }
+                        />
+                        {autoLoader && (
+                          <LoaderSpinner customStyle={autoLoaderStyle} />
+                        )}
                         <EndingBox width="4rem">
                           <ReturnIcon onClick={() => onAddEmailClicked()}>
                             <KeyboardReturnIcon />

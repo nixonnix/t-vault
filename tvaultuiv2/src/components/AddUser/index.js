@@ -1,12 +1,14 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
+import { makeStyles } from '@material-ui/core/styles';
 import { InputLabel, Typography } from '@material-ui/core';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import styled, { css } from 'styled-components';
 import PropTypes from 'prop-types';
 import ComponentError from '../../errorBoundaries/ComponentError/component-error';
 import mediaBreakpoints from '../../breakpoints';
+import AutoCompleteComponent from '../FormFields/AutoComplete';
 import ButtonComponent from '../FormFields/ActionButton';
 import apiService from '../../views/private/safe/apiService';
 import LoaderSpinner from '../Loaders/LoaderSpinner';
@@ -18,7 +20,6 @@ import {
   RequiredCircle,
   RequiredText,
 } from '../../styles/GlobalStyles';
-import TypeAheadComponent from '../TypeAheadComponent';
 
 const { small, smallAndMedium } = mediaBreakpoints;
 
@@ -87,7 +88,12 @@ const customStyle = css`
   color: red;
 `;
 
-
+const useStyles = makeStyles(() => ({
+  icon: {
+    color: '#5e627c',
+    fontSize: '2rem',
+  },
+}));
 
 const AddUser = (props) => {
   const {
@@ -99,6 +105,7 @@ const AddUser = (props) => {
     isCertificate,
     isIamAzureSvcAccount,
   } = props;
+  const classes = useStyles();
   const [radioValue, setRadioValue] = useState('read');
   const [searchValue, setSearchValue] = useState('');
   const [options, setOptions] = useState([]);
@@ -258,27 +265,7 @@ const AddUser = (props) => {
           </InputLabel>
           {configData.AD_USERS_AUTOCOMPLETE ? (
             <>
-              <TypeAheadComponent
-                options={options.map(
-                  (item) =>
-                    `${item?.userEmail?.toLowerCase()}, ${getName(
-                      item?.displayName?.toLowerCase()
-                    )}, ${item?.userName?.toLowerCase()}`
-                )}
-                icon="search"
-                disabled={!!(access && username)}
-                placeholder="Search by NTID, Email or Name "
-                userInput={searchValue}
-                error={username !== searchValue && !isValidUserName}
-                helperText={
-                  username !== searchValue && !isValidUserName
-                    ? `User ${searchValue} does not exist!`
-                    : ''
-                }
-                onSelected={(e, val) => onSelected(e, val)}
-                onChange={(e) => onSearchChange(e)}
-              />
-              {/* <AutoCompleteComponent
+              <AutoCompleteComponent
                 options={options.map(
                   (item) =>
                     `${item?.userEmail?.toLowerCase()}, ${getName(
@@ -298,7 +285,7 @@ const AddUser = (props) => {
                     ? `User ${searchValue} does not exist!`
                     : ''
                 }
-              /> */}
+              />
               <InstructionText>
                 Search the T-Mobile system to add users
               </InstructionText>

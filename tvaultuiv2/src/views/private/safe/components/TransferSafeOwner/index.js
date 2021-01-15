@@ -12,6 +12,7 @@ import ButtonComponent from '../../../../../components/FormFields/ActionButton';
 import ComponentError from '../../../../../errorBoundaries/ComponentError/component-error';
 import leftArrowIcon from '../../../../../assets/left-arrow.svg';
 import mediaBreakpoints from '../../../../../breakpoints';
+import AutoCompleteComponent from '../../../../../components/FormFields/AutoComplete';
 import LoaderSpinner from '../../../../../components/Loaders/LoaderSpinner';
 import apiService from '../../apiService';
 import { validateEmail } from '../../../../../services/helper-function';
@@ -19,7 +20,6 @@ import {
   InstructionText,
   RequiredCircle,
 } from '../../../../../styles/GlobalStyles';
-import TypeAheadComponent from '../../../../../components/TypeAheadComponent';
 
 const { small } = mediaBreakpoints;
 
@@ -95,6 +95,20 @@ const Value = styled.p`
   text-transform: ${(props) => props.capitalize || ''};
 `;
 
+const useStyles = makeStyles(() => ({
+  select: {
+    '&.MuiFilledInput-root.Mui-focused': {
+      backgroundColor: '#fff',
+    },
+  },
+  dropdownStyle: {
+    backgroundColor: '#fff',
+  },
+  icon: {
+    color: '#5e627c',
+    fontSize: '2rem',
+  },
+}));
 
 const TransferSafeOwner = (props) => {
   const {
@@ -107,6 +121,7 @@ const TransferSafeOwner = (props) => {
   const [ownerSelected, setOwnerSelected] = useState({});
   const [options, setOptions] = useState([]);
   const [autoLoader, setAutoLoader] = useState(false);
+  const classes = useStyles();
   const [isValidEmail, setIsValidEmail] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [disabledTransfer, setDisabledTransfer] = useState(true);
@@ -243,14 +258,15 @@ const TransferSafeOwner = (props) => {
           New Owner
           <RequiredCircle margin="0.5rem" />
         </InputLabel>
-        <TypeAheadComponent
+        <AutoCompleteComponent
           options={options.map(
             (item) =>
               `${item?.userEmail?.toLowerCase()}, ${getName(
                 item?.displayName?.toLowerCase()
               )}, ${item?.userName?.toLowerCase()}`
           )}
-          userInput={owner}
+          classes={classes}
+          searchValue={owner}
           icon="search"
           name="owner"
           onSelected={(e, val) => onSelected(e, val)}
